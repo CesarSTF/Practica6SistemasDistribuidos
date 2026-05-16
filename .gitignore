@@ -1,4 +1,4 @@
-### STS ###
+### IDEs ###
 .apt_generated
 .classpath
 .factorypath
@@ -6,28 +6,46 @@
 .settings
 .springBeans
 .sts4-cache
-
-### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
 *.ipr
-
-### NetBeans ###
+.vscode/
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-fleet-monitor/HELP.md
-fleet-monitor/target/
-fleet-monitor/.mvn/wrapper/maven-wrapper.jar
-!fleet-monitor/**/src/main/**/target/
-!fleet-monitor/**/src/test/**/target/
 
-fleet-monitor/build/
-!fleet-monitor/**/src/main/**/build/
-!fleet-monitor/**/src/test/**/build/
+### Java / Maven (todos los proyectos) ###
+**/target/
+**/build/
+*.jar
+*.war
 
-### VS Code ###
-.vscode/
+### Maven wrapper (solo el jar, no el script) ###
+**/.mvn/wrapper/maven-wrapper.jar
+
+### Python ###
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/venv/
+
+### Base de datos SQLite ###
+*.db
+
+### Docker ###
+.env
+.env.*
+docker-compose.override.yml
+docker-compose.*.local.yml
+.docker
+.dockerignore
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Agentes / herramientas ###
+.pymcp

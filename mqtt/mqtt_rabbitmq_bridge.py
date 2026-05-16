@@ -1,15 +1,19 @@
 import json
+import os
 import paho.mqtt.client as mqtt
 import pika
 
-# CONFIGURACIONES
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883 
-RABBITMQ_HOST = "localhost" 
+# CONFIGURACIONES desde variables de entorno
+MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost") 
+RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
+RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "guest")
 
 def configurar_rabbitmq():
     # Conectar a RabbitMQ 
-    conexion = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+    credenciales = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
+    conexion = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, credentials=credenciales))
     canal = conexion.channel()
     
     # Declarar colas (durable=True para que sobrevivan a reinicios del broker) 
