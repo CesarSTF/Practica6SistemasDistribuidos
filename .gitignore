@@ -1,0 +1,33 @@
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+fleet-monitor/HELP.md
+fleet-monitor/target/
+fleet-monitor/.mvn/wrapper/maven-wrapper.jar
+!fleet-monitor/**/src/main/**/target/
+!fleet-monitor/**/src/test/**/target/
+
+fleet-monitor/build/
+!fleet-monitor/**/src/main/**/build/
+!fleet-monitor/**/src/test/**/build/
+
+### VS Code ###
+.vscode/
