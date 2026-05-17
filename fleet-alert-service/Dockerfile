@@ -1,3 +1,5 @@
+# Multi-stage build para optimizar el tamaño del contenedor
+# Fase 1: Build
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .

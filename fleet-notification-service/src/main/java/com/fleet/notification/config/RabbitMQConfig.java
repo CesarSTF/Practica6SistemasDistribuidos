@@ -4,6 +4,10 @@ import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/*
+ * Configuración de RabbitMQ para el servicio de notificaciones
+ * Define la cola de notificaciones
+ */
 @Configuration
 public class RabbitMQConfig {
 

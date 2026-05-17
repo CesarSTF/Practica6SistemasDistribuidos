@@ -1,5 +1,9 @@
 package com.fleet.gps.model;
 
+/*
+ * Clase que representa un mensaje GPS
+ * Contiene la información de ubicación y velocidad del vehículo
+ */
 public class GpsMessage {
     private String vehicleId;
     private String timestamp;

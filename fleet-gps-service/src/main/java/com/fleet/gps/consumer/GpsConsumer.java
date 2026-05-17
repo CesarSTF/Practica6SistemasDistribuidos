@@ -9,6 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+/*
+ * Consumer de mensajes GPS
+ * Recibe mensajes de la cola GPS_QUEUE y los procesa
+ */
 @Component
 public class GpsConsumer {
 

@@ -2,6 +2,10 @@ package com.fleet.api.model;
 
 import java.time.LocalDateTime;
 
+/*
+ * Clase para representar datos de GPS
+ * Contiene información sobre la ubicación y velocidad del vehículo
+ */
 public class GpsData {
     private String vehicleId;
     private Double latitude;

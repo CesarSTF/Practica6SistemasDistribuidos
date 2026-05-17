@@ -1,3 +1,4 @@
+# Archivo de configuración de Spring Boot
 server:
   port: 8083
 spring:

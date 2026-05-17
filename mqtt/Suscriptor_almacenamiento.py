@@ -47,7 +47,7 @@ def inicializar_base_datos():
     conexion.close()
     print("Base de datos inicializada.")
 
-
+# Callback que se ejecuta al recibir un mensaje
 def al_recibir_mensaje(cliente, datos_usuario, mensaje):
     topic = mensaje.topic
     # decodificar_json(mensaje.payload)
@@ -90,6 +90,7 @@ def al_recibir_mensaje(cliente, datos_usuario, mensaje):
     conexion.commit()
     conexion.close()
 
+# Función principal
 def principal():
     inicializar_base_datos()
 

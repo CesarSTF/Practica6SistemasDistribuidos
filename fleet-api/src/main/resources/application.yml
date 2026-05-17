@@ -1,3 +1,5 @@
+# Archivo de configuración de Spring Boot
+# Define el puerto y la configuración de RabbitMQ
 server:
   port: 8080
 spring:

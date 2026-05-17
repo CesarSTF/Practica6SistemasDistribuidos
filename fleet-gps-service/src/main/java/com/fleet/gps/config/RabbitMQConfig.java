@@ -4,6 +4,10 @@ import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/*
+ * Configuración de RabbitMQ
+ * Define las colas y exchanges para el servicio de GPS
+ */
 @Configuration
 public class RabbitMQConfig {
 

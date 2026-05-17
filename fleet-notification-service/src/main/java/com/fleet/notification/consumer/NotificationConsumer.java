@@ -7,6 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+/*
+ * Consumidor de notificaciones
+ * Recibe notificaciones de la cola de notificaciones y las procesa
+ */
 @Component
 public class NotificationConsumer {
 

@@ -10,6 +10,10 @@ import com.fleet.gps.model.GpsMessage;
 public class GpsService {
     private static final Logger log = LoggerFactory.getLogger(GpsService.class);
 
+    /*
+     * Procesar datos de GPS
+     * @param msg Mensaje GPS a procesar
+     */
     public void processGpsData(GpsMessage msg) {
         log.info("GPS procesado | Vehiculo: {} | Posicion: ({}, {}) | Velocidad: {} km/h",
                  msg.getVehicleId(), msg.getLat(), msg.getLng(), msg.getSpeed());
