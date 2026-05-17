@@ -1,0 +1,548 @@
+<!-- 
+==============================================
+DASHBOARD DE MONITOREO DE FLOTA LOGÍSTICA
+==============================================
+Sistema web para visualización en tiempo real de vehículos GPS.
+
+Características:
+- Interfaz responsive con Bootstrap 5
+- Actualización automática cada 3 segundos
+- Indicadores de velocidad con color-coding
+- Estadísticas agregadas en tiempo real
+- Diseño moderno con gradientes y animaciones
+
+Arquitectura:
+- Frontend: HTML5/CSS3/ES6 JavaScript
+- Backend: Spring Boot REST API (http://localhost:8080/api/fleet)
+- Protocolo: HTTP/JSON con Fetch API (polling)
+- Datos: Ubicaciones GPS en tiempo real desde MQTT → RabbitMQ → Microservicio
+-->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Metadatos básicos -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Monitoring Dashboard</title>
+    <!-- CDN de Bootstrap 5 para componentes UI preestablecidos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- CDN de Font Awesome 6.4.0 para iconos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- ESTILOS PERSONALIZADOS -->
+    <style>
+        /*
+        ========================================
+        RESET Y ESTILOS GLOBALES
+        ========================================
+        */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            /* Gradiente púrpura de fondo */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        
+        .container-main {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /*
+        ========================================
+        ENCABEZADO
+        ========================================
+        */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            margin: 0;
+        }
+        
+        /*
+        ========================================
+        TARJETAS DE ESTADÍSTICAS
+        ========================================
+        Grid responsivo: 4 columnas en desktop, menos en mobile
+        */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card .stat-value {
+            /* Número grande en color púrpura */
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .stat-card .stat-label {
+            color: #999;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        
+        /*
+        ========================================
+        GRID DE VEHÍCULOS
+        ========================================
+        Responsive grid: tarjetas de mínimo 350px
+        Auto-fill para llenar el ancho disponible
+        */
+        .vehicles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        /*
+        ========================================
+        TARJETA DE VEHÍCULO
+        ========================================
+        Cada tarjeta muestra: ID, estado, ubicación, velocidad, timestamp
+        */
+        .vehicle-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        /* Efecto hover: levanta la tarjeta */
+        .vehicle-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Encabezado con gradiente púrpura */
+        .vehicle-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vehicle-id {
+            /* ID del vehículo: VH-001, VH-002, etc. */
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .vehicle-status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        /* Cuerpo de la tarjeta con detalles -->
+        .vehicle-body {
+            padding: 20px;
+        }
+        
+        /* Fila de información: etiqueta y valor -->
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            /* Etiqueta de información con icono -->
+            color: #999;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-value {
+            /* Valor de la información -->
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        /*
+        ========================================
+        INDICADOR DE VELOCIDAD
+        ========================================
+        Color-coding: Baja (verde), Media (amarillo), Alta (rojo)
+        */
+        .speed-indicator {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* Velocidad < 20 km/h: Verde (Baja) -->
+        .speed-low {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        /* Velocidad 20-50 km/h: Amarillo (Media) -->
+        .speed-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        /* Velocidad > 50 km/h: Rojo (Alta) -->
+        .speed-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* Estado de carga -->
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+        
+        /* Contenedor de error -->
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        /* Timestamp pequeño debajo de la información -->
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        /*
+        ========================================
+        INDICADOR DE ACTUALIZACIÓN
+        ========================================
+        Mostrado en esquina superior derecha
+        */
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #666;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Punto pulsante que indica actualización -->
+        .spinner {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-right: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        /* Animación de pulso -->
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Indicador de actualización en esquina superior derecha -->
+    <div class="refresh-indicator">
+        <span class="spinner"></span>
+        Actualizando cada 3s
+    </div>
+    
+    <!-- Contenedor principal -->
+    <div class="container-main">
+        <!-- ENCABEZADO CON TÍTULO -->
+        <div class="header">
+            <h1><i class="fas fa-truck"></i> Fleet Monitoring Dashboard</h1>
+            <p>Sistema de Monitoreo de Flota Logística en Tiempo Real</p>
+        </div>
+        
+        <!-- Contenedor de errores (se rellena dinámicamente si hay errores) -->
+        <div id="error-container"></div>
+        
+        <!-- ESTADÍSTICAS AGREGADAS (4 tarjetas) -->
+        <div class="stats-row">
+            <!-- Total de vehículos activos en el sistema -->
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-cubes"></i> Total Vehículos</div>
+                <div class="stat-value" id="total-vehicles">0</div>
+            </div>
+            
+            <!-- Número de alertas activas (TODO: implementar lógica de alertas) -->
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-bolt"></i> Alertas Activas</div>
+                <div class="stat-value" id="active-alerts">0</div>
+            </div>
+            
+            <!-- Velocidad promedio de todos los vehículos -->
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-tachometer-alt"></i> Vel. Promedio</div>
+                <div class="stat-value" id="avg-speed">0 km/h</div>
+            </div>
+            
+            <!-- Cantidad de vehículos en movimiento (velocidad > 5 km/h) -->
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-map-marker-alt"></i> En Tránsito</div>
+                <div class="stat-value" id="in-transit">0</div>
+            </div>
+        </div>
+        
+        <!-- GRID DE VEHÍCULOS (se rellena dinámicamente) -->
+        <div id="vehicles-container" class="vehicles-grid">
+            <!-- Estado de carga inicial -->
+            <div class="loading">
+                <div class="spinner" style="width: 15px; height: 15px; margin-bottom: 10px;"></div>
+                <p>Cargando vehículos...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /*
+        ========================================
+        JAVASCRIPT - LÓGICA DE ACTUALIZACIÓN
+        ========================================
+        
+        Este script maneja:
+        1. Conexión a API REST backend
+        2. Fetch de datos cada 3 segundos
+        3. Formateo y renderizado de HTML
+        4. Color-coding de velocidades
+        5. Manejo de errores
+        */
+        
+        // URL base de la API REST (backend Spring Boot)
+        const API_URL = 'http://localhost:8080/api/fleet';
+        
+        /**
+         * Determina la clase CSS de estilo de velocidad según el valor
+         * Baja: < 20 km/h (verde)
+         * Media: 20-50 km/h (amarillo)
+         * Alta: > 50 km/h (rojo)
+         * 
+         * @param {number} speed - Velocidad en km/h
+         * @returns {string} Nombre de clase CSS (speed-low, speed-medium, speed-high)
+         */
+        function getSpeedClass(speed) {
+            if (speed < 20) return 'speed-low';
+            if (speed < 50) return 'speed-medium';
+            return 'speed-high';
+        }
+        
+        /**
+         * Genera etiqueta legible de velocidad
+         * 
+         * @param {number} speed - Velocidad en km/h
+         * @returns {string} Etiqueta (Baja, Media, Alta)
+         */
+        function getSpeedLabel(speed) {
+            if (speed < 20) return 'Baja';
+            if (speed < 50) return 'Media';
+            return 'Alta';
+        }
+        
+        /**
+         * Convierte ISO 8601 timestamp a formato legible local
+         * Ejemplo: "2026-05-17T01:33:06" → "01:33:06"
+         * 
+         * @param {string} isoString - Fecha ISO 8601
+         * @returns {string} Hora formateada en formato local
+         */
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('es-ES');
+        }
+        
+        /**
+         * Calcula velocidad promedio de todos los vehículos
+         * 
+         * @param {Array} vehicles - Array de objetos VehicleLocation
+         * @returns {number} Velocidad promedio redondeada a 1 decimal
+         */
+        function calculateAverageSpeed(vehicles) {
+            if (vehicles.length === 0) return 0;
+            const sum = vehicles.reduce((acc, v) => acc + v.speed, 0);
+            return (sum / vehicles.length).toFixed(1);
+        }
+        
+        /**
+         * FUNCIÓN PRINCIPAL: Actualiza el dashboard completo
+         * 
+         * Proceso:
+         * 1. Fetch de /api/fleet/vehicles (lista de ubicaciones)
+         * 2. Fetch de /api/fleet/status (estadísticas agregadas)
+         * 3. Actualiza valores de tarjetas de estadísticas
+         * 4. Renderiza tarjetas de vehículos con HTML dinámico
+         * 5. Maneja errores con mensaje en UI
+         * 
+         * Llamada automáticamente cada 3 segundos por setInterval()
+         */
+        async function updateDashboard() {
+            try {
+                // 1. OBTENER DATOS DEL BACKEND
+                // Fetch a /api/fleet/vehicles retorna array de VehicleLocation
+                const vehiclesResponse = await fetch(`${API_URL}/vehicles`);
+                const vehicles = await vehiclesResponse.json();
+                
+                // Fetch a /api/fleet/status retorna FleetStatus con totalVehicles y activeAlerts
+                const statusResponse = await fetch(`${API_URL}/status`);
+                const status = await statusResponse.json();
+                
+                // 2. ACTUALIZAR TARJETAS DE ESTADÍSTICAS
+                document.getElementById('total-vehicles').textContent = status.totalVehicles;
+                document.getElementById('active-alerts').textContent = status.activeAlerts;
+                
+                // Calcular y mostrar velocidad promedio
+                document.getElementById('avg-speed').textContent = 
+                    calculateAverageSpeed(vehicles) + ' km/h';
+                
+                // Contar vehículos en movimiento (velocidad > 5 km/h para evitar falsos positivos)
+                document.getElementById('in-transit').textContent = 
+                    vehicles.filter(v => v.speed > 5).length;
+                
+                // 3. LIMPIAR MENSAJES DE ERROR
+                document.getElementById('error-container').innerHTML = '';
+                
+                // 4. MANEJAR CASO SIN VEHÍCULOS
+                if (vehicles.length === 0) {
+                    document.getElementById('vehicles-container').innerHTML = 
+                        '<div class="loading"><p>No hay vehículos disponibles</p></div>';
+                    return;
+                }
+                
+                // 5. RENDERIZAR TARJETAS DE VEHÍCULOS (Template Literals)
+                const vehiclesHTML = vehicles.map(vehicle => `
+                    <!-- TARJETA DE VEHÍCULO -->
+                    <div class="vehicle-card">
+                        <!-- Encabezado con ID y estado -->
+                        <div class="vehicle-header">
+                            <div class="vehicle-id">${vehicle.vehicleId}</div>
+                            <div class="vehicle-status">
+                                <!-- Indicador de estado: verde (en movimiento) o rojo (detenido) -->
+                                <i class="fas fa-circle" style="color: ${
+                                    vehicle.speed > 5 ? '#4ade80' : '#ef4444'
+                                };"></i>
+                                ${vehicle.speed > 5 ? 'En movimiento' : 'Detenido'}
+                            </div>
+                        </div>
+                        
+                        <!-- Cuerpo con detalles -->
+                        <div class="vehicle-body">
+                            <!-- FILA 1: Ubicación GPS -->
+                            <div class="info-row">
+                                <div class="info-label">
+                                    <i class="fas fa-map-marker-alt"></i> Ubicación
+                                </div>
+                                <div class="info-value">
+                                    ${vehicle.latitude.toFixed(4)}, ${vehicle.longitude.toFixed(4)}
+                                </div>
+                            </div>
+                            
+                            <!-- FILA 2: Velocidad con color-coding -->
+                            <div class="info-row">
+                                <div class="info-label">
+                                    <i class="fas fa-tachometer-alt"></i> Velocidad
+                                </div>
+                                <!-- Clase CSS determinada por rango de velocidad -->
+                                <div class="speed-indicator ${getSpeedClass(vehicle.speed)}">
+                                    ${vehicle.speed.toFixed(1)} km/h (${getSpeedLabel(vehicle.speed)})
+                                </div>
+                            </div>
+                            
+                            <!-- FILA 3: Última actualización (hora formateada) -->
+                            <div class="info-row">
+                                <div class="info-label">
+                                    <i class="fas fa-clock"></i> Última actualización
+                                </div>
+                                <div class="info-value">${formatTime(vehicle.lastUpdate)}</div>
+                            </div>
+                            
+                            <!-- Timestamp completo debajo -->
+                            <div class="timestamp">
+                                Actualizado: ${new Date(vehicle.lastUpdate).toLocaleString('es-ES')}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');  // join('') convierte array de HTML a string único
+                
+                // Reemplazar contenedor con tarjetas generadas
+                document.getElementById('vehicles-container').innerHTML = vehiclesHTML;
+                
+            } catch (error) {
+                // 6. MANEJO DE ERRORES
+                console.error('Error al actualizar dashboard:', error);
+                document.getElementById('error-container').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-circle"></i> 
+                        Error al conectar con el servidor: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Ejecutar updateDashboard cuando la página carga
+        updateDashboard();
+        
+        // Ejecutar updateDashboard cada 3 segundos (3000 ms) indefinidamente
+        // Esto crea un polling continuo que mantiene los datos actualizados
+        setInterval(updateDashboard, 3000);
+    </script>
+</body>
+</html>

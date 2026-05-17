@@ -1,4 +1,4 @@
-DC = docker-compose
+DC = docker compose
 PORTS = 1883 5672 15672 8080 8081 8082 8083
 
 kill:
